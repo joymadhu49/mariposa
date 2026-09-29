@@ -1,0 +1,33 @@
+// Captures the first minute of a fresh game with a controller: tutorial hints, glyphs and pacing.
+import { launch, openGame, scratch } from './lib.mjs';
+const { browser, page, logs } = await launch({ width: 1280, height: 720, pad: true });
+await openGame(page, 'dist/mariposa.html');
+await page.waitForTimeout(1000);
+const adv = (s, r = false) => page.evaluate(([s, r]) => __g.advance(s, r), [s, r]);
+await adv(1.2);
+await page.evaluate(() => __pad.set('cross', 1));
+await adv(0.15);
+await page.evaluate(() => __pad.release('cross'));
+await page.waitForTimeout(1400);
+await adv(3.5, true);
+await page.screenshot({ path: `${scratch}/tut_0.png` });
+const hint = async () => page.evaluate(() => ({ hint: document.querySelector('#hint')?.innerText, prompt: document.querySelector('#prompt')?.innerText, state: __g.state }));
+console.log('t0', JSON.stringify(await hint()));
+await page.evaluate(() => __pad.axes(0, -0.8, 0, 0));
+await adv(4, true);
+console.log('moving', JSON.stringify(await hint()));
+await page.screenshot({ path: `${scratch}/tut_1.png` });
+await page.evaluate(() => __pad.axes(0, -0.8, 0.9, 0));
+await adv(2, true);
+console.log('looking', JSON.stringify(await hint()));
+await page.evaluate(() => { __pad.axes(0, -0.8, 0, 0); __pad.set('cross', 1); });
+await adv(2, true);
+await page.screenshot({ path: `${scratch}/tut_2.png` });
+console.log('climbing', JSON.stringify(await hint()));
+await page.evaluate(() => { __pad.release('cross'); __pad.set('r2', 1); });
+await adv(2, true);
+console.log('boosting', JSON.stringify(await hint()));
+await page.screenshot({ path: `${scratch}/tut_3.png` });
+const seen = new Set();
+for (const l of logs) { const k = l.slice(0, 200); if (seen.has(k)) continue; seen.add(k); if (!l.includes('prefill')) console.log(l.slice(0, 300)); }
+await browser.close();
