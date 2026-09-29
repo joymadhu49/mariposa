@@ -173,7 +173,9 @@ export class Input {
     const [lx, ly] = radial(this.rawAxes[0], this.rawAxes[1], dz, 0.97, this.settings.stickCurve);
     const [rx, ry] = radial(this.rawAxes[2], this.rawAxes[3], Math.max(0.1, dz * 0.85), 0.97, 1.6);
     this.axes[0] = lx; this.axes[1] = ly; this.axes[2] = rx; this.axes[3] = ry;
-    const K = (c) => (this.keys.has(c) ? 1 : 0);
+    // a key counts as down if it is held, or was pressed since the last update: a tap shorter than one frame still registers
+    const dn = (c) => this.keys.has(c) || this.keyEdge.has(c);
+    const K = (c) => (dn(c) ? 1 : 0);
     let mx = lx + K('KeyD') - K('KeyA');
     let my = -ly + K('KeyW') - K('KeyS');
     const ml = Math.hypot(mx, my);
@@ -191,7 +193,7 @@ export class Input {
     this.wheel = this.mouse.wheel; this.mouse.wheel = 0;
 
     // ---- actions
-    const kb = (c) => (this.keys.has(c) ? 1 : 0);
+    const kb = K;
     const A = {
       climb: Math.max(this.btn[BTN.CROSS] ? 1 : 0, kb('Space')),
       descend: Math.max(this.val[BTN.L2] > 0.1 ? this.val[BTN.L2] : 0, kb('KeyC'), kb('ControlLeft')),
@@ -225,10 +227,10 @@ export class Input {
 
     // ---- menu navigation with auto repeat (dpad, left stick, arrows)
     const dirs = {
-      up: this.btn[BTN.UP] || ly < -0.55 || this.keys.has('ArrowUp') || this.keys.has('KeyW'),
-      down: this.btn[BTN.DOWN] || ly > 0.55 || this.keys.has('ArrowDown') || this.keys.has('KeyS'),
-      left: this.btn[BTN.LEFT] || lx < -0.55 || this.keys.has('ArrowLeft') || this.keys.has('KeyA'),
-      right: this.btn[BTN.RIGHT] || lx > 0.55 || this.keys.has('ArrowRight') || this.keys.has('KeyD'),
+      up: this.btn[BTN.UP] || ly < -0.55 || dn('ArrowUp') || dn('KeyW'),
+      down: this.btn[BTN.DOWN] || ly > 0.55 || dn('ArrowDown') || dn('KeyS'),
+      left: this.btn[BTN.LEFT] || lx < -0.55 || dn('ArrowLeft') || dn('KeyA'),
+      right: this.btn[BTN.RIGHT] || lx > 0.55 || dn('ArrowRight') || dn('KeyD'),
     };
     for (const d of ['up', 'down', 'left', 'right']) {
       this.navFire[d] = false;

@@ -115,7 +115,8 @@ deterministically. Build first, then run them from the repo root. They need Play
 ```
 node tools/e2e.mjs        # controller: title, flight, sipping, pollination, map, photo, disconnect, save
 node tools/e2e2.mjs       # discoveries, stars, unlocks, finale, continue
-node tools/kbtest.mjs     # keyboard and mouse path
+node tools/kbtest.mjs     # keyboard and mouse path, including taps shorter than one frame
+node tools/realtime.mjs   # keyboard run in the real time loop, on a built file or a live URL
 node tools/phototest.mjs  # photo mode: every filter downloads a real PNG at full resolution
 node tools/loadbar.mjs    # loading screen fill at 0, 50 and 100 percent
 node tools/savetest.mjs   # damaged or odd save data must never break boot

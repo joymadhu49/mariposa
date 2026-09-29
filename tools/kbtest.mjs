@@ -9,16 +9,24 @@ const ok = (name, cond, extra = '') => { console.log((cond ? 'PASS ' : 'FAIL ') 
 const adv = (s) => page.evaluate((s) => __g.advance(s, false), s);
 const info = () => page.evaluate(() => __g.debugInfo());
 const tap = async (code, hold = 0.12) => { await page.keyboard.down(code); await adv(hold); await page.keyboard.up(code); await adv(0.1); };
+// a tap shorter than one frame (key down and up inside the same task) must still count, as on a busy or slow machine
+const quickTap = async (code) => {
+  await page.evaluate((code) => {
+    window.dispatchEvent(new KeyboardEvent('keydown', { code, key: code, bubbles: true, cancelable: true }));
+    window.dispatchEvent(new KeyboardEvent('keyup', { code, key: code, bubbles: true }));
+  }, code);
+  await adv(0.2);
+};
 
 let s = await info();
 ok('boots to title', s.state === 'title');
 await adv(0.6);
 await page.screenshot({ path: `${scratch}/kb_title.png` });
-await tap('Enter');
+await quickTap('Enter');
 await page.waitForTimeout(1200);
 await adv(0.5);
 s = await info();
-ok('Enter begins play', s.state === 'play', JSON.stringify(s));
+ok('a sub frame tap on Enter begins play', s.state === 'play', JSON.stringify(s));
 ok('device is keyboard', s.dev === 'keyboard');
 
 await page.evaluate(() => __g.debugPlay(40, 640, 4, Math.PI, 10));
@@ -94,11 +102,11 @@ const hint = await page.evaluate(() => document.querySelector('#hint')?.innerTex
 console.log('hint text:', JSON.stringify(hint));
 
 // screens
-await tap('KeyM'); await adv(0.6);
-s = await info(); ok('M opens map', s.state === 'pause' || s.screen === 'map' || s.state !== 'play', JSON.stringify(s));
+await quickTap('KeyM'); await adv(0.6);
+s = await info(); ok('a sub frame tap on M opens the map', s.state === 'pause' || s.screen === 'map' || s.state !== 'play', JSON.stringify(s));
 await page.screenshot({ path: `${scratch}/kb_map.png` });
-await tap('Escape'); await adv(0.6);
-s = await info(); ok('Esc closes map', s.state === 'play', JSON.stringify(s));
+await quickTap('Escape'); await adv(0.6);
+s = await info(); ok('a sub frame tap on Esc closes the map', s.state === 'play', JSON.stringify(s));
 await tap('KeyJ'); await adv(0.6);
 s = await info(); ok('J opens journal', s.state !== 'play', JSON.stringify(s));
 await tap('Escape'); await adv(0.6);
